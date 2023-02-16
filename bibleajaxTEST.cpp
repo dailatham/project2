@@ -47,6 +47,7 @@ int main() {
   // GET THE INPUT DATA
   // browser sends us a string of field name/value pairs from HTML form
   // retrieve the value for each appropriate field name
+  form_iterator bibleVersion = cgi.getElement("bible");
   form_iterator st = cgi.getElement("search_type");
   form_iterator book = cgi.getElement("book");
   form_iterator chapter = cgi.getElement("chapter");
@@ -114,12 +115,32 @@ int main() {
                  validInput = true;
         }
   }
+  string b;
+  int bibleVersionNum = bibleVersion->getIntegerValue();
+  cout << "bibleVersionNum =" << bibleVersionNum;
+  if (bibleVersionNum == 2) { // Determine version of Bible to use
+	b = "/home/class/csc3004/Bibles/kjv-complete";
+  }
+  else if (bibleVersionNum == 3) {
+	b = "/home/class/csc3004/Bibles/dby-complete";
+  }
+  else if (bibleVersionNum == 4) {
+	b = "/home/class/csc3004/Bibles/ylt-complete";
+  }
+  else if (bibleVersionNum == 5) {
+	b = "/home/class/csc3004/Bibles/webster-complete";
+  }
+  else {
+	b = "/home/class/csc3004/Bibles/web-complete";
+  }
+  Bible webBible(b);
+
 
   // Create a reference from the numbers;
   Ref ref(bookNum, chapterNum, verseNum);
 
   // Create Bible object to process the raw text file
-  Bible webBible("/home/class/csc3004/Bibles/web-complete");
+//  Bible webBible("/home/class/csc3004/Bibles/web-complete");
   Verse verseResult;
   LookupResult result;
   int count = 0;	// help to keep track with multi-verse
