@@ -136,7 +136,7 @@ void Ref::display() { 	// Display Reference
      cout << "\n" << book_names[book] << " " << chap << "\n" << verse;
 }
 void Ref::displayNonExisted() {
-     cerr << "Error : " << book_names[book] << ", chapter " << chap << ", verse " << verse << " DOES NOT EXSIT.";
+     cout << "Error : " << book_names[book] << ", chapter " << chap << ", verse " << verse << " DOES NOT EXSIT.";
 }
 void Ref::displayBookNameCh() {
      cout << "\n" << book_names[book] << " " << chap;

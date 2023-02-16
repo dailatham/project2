@@ -21,9 +21,9 @@ Bible::Bible(const string s) {	infile = s;}
 // REQUIRED: lookup finds a given verse in this Bible
 Verse Bible::lookup(Ref ref, LookupResult& status) { 
     // update the status variable
-	status = OTHER; // placeholder until retrieval is attempted
-	// create and return the verse object
-	Verse aVerse;	// default verse, to be replaced by a Verse object
+    status = OTHER; // placeholder until retrieval is attempted
+    // create and return the verse object
+    Verse aVerse;	// default verse, to be replaced by a Verse object
 	                // that is constructed from a line in the file.
 
 
@@ -32,18 +32,38 @@ Verse Bible::lookup(Ref ref, LookupResult& status) {
     instream.open(infile.c_str(), ios::in);
     string s;
     Verse verse;
+    Ref cur;
+    bool bookFound = false, chapFound = false, verseFound = false;
 
     do {
 	// get a next verse
 	getline(instream, s);
 		if (s != ""){
 		verse = Verse(s);
+		cur = verse.getRef();
+
+		// check if the current book, chapter, verse exist.
+		if (cur.getBook() == ref.getBook())
+			bookFound = true;
+		if (cur.getBook() == ref.getBook() && cur.getChap() == ref.getChap())
+			chapFound = true;
+		if (cur.getBook() == ref.getBook() && cur.getChap() == ref.getChap() && cur.getVerse() == ref.getVerse())
+			verseFound == true;
+
+		// check if the retreive verse match the ref
 		if (verse.getRef() == ref){
 			aVerse = verse;
+			status = SUCCESS;
 		}
-	}
-     } while (!(verse.getRef() == ref) && !instream.fail());
-     status = SUCCESS;
+		}
+    } while (!(verse.getRef() == ref) && !instream.fail());
+
+    // update th status
+    if (status != SUCCESS) {
+	if (bookFound && chapFound) { status = NO_VERSE; }
+	else if (bookFound){ status = NO_CHAPTER; }
+	else { status = NO_BOOK; }
+    }
 
     return(aVerse);
 }
@@ -69,7 +89,22 @@ Verse Bible::nextVerse(LookupResult& status) {
 // REQUIRED: Return an error message string to describe status
 string Bible::error(LookupResult status) {
 	//DAISY
-	cout << "ERROR :  " << status <<  endl;
+//	cout << "ERROR :  " << status <<  endl;
+	if (status == NO_BOOK) {
+		return "Error : No book found.";
+	}
+	else if (status == NO_CHAPTER) {
+		return "Error : No chapter found.";
+	}
+	else if (status == NO_VERSE) {
+		return "Error : No verse found.";
+	}
+	else if (status == OTHER) {
+		return "Error : Unspecified";
+	}
+	else {
+		return "!!WHY NOT WORK!!";
+	}
 }
 
 void Bible::display() {

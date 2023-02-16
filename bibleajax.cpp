@@ -1,11 +1,8 @@
-
-
-
 /* Demo server program for Bible lookup using AJAX/CGI interface
  * By James Skon, Febrary 10, 2011
  * updated by Bob Kasper, January 2020
  * Mount Vernon Nazarene University
- * 
+ *
  * This sample program works using the cgicc AJAX library to
  * allow live communication between a web page and a program running on the
  * same server that hosts the web server.
@@ -50,6 +47,7 @@ int main() {
   // GET THE INPUT DATA
   // browser sends us a string of field name/value pairs from HTML form
   // retrieve the value for each appropriate field name
+  form_iterator bibleVersion = cgi.getElement("bible");
   form_iterator st = cgi.getElement("search_type");
   form_iterator book = cgi.getElement("book");
   form_iterator chapter = cgi.getElement("chapter");
@@ -57,30 +55,33 @@ int main() {
   form_iterator nv = cgi.getElement("num_verse");
 
   int chapterNum, bookNum, verseNum, Numv;
+
   // Convert and check input data
   bool validInput = false;
   if (chapter != cgi.getElements().end()) {
 	 chapterNum = chapter->getIntegerValue();
 	 if (chapterNum > 150) {
 		 cout << "<p>The chapter number (" << chapterNum << ") is too high.</p>" << endl;
+		 exit(2);
 	 }
 	 else if (chapterNum <= 0) {
 		 cout << "<p>The chapter must be a positive number.</p>" << endl;
+		 exit(2);
 	 }
 	 else
 		 validInput = true;
   }
-
-  /* TO DO: OTHER INPUT VALUE CHECKS ARE NEEDED ... but that's up to you! */
   // Most book is 66
   if (book != cgi.getElements().end()) {
 	bookNum = book->getIntegerValue();
 	if (bookNum > 66) {
 		cout << "<p>The book number (" << chapterNum << ") is too high.</p>" << endl;
+		exit(2);
 	}
 	 else if (bookNum <= 0) {
 		 cout << "<p>The book must be a positive number.</p>" << endl;
 		 validInput = false;
+		 exit(2);
 	}
 	 else {
 		 validInput = true;
@@ -91,10 +92,12 @@ int main() {
 	verseNum = verse->getIntegerValue();
 	 if (verseNum > 176) {
 		 cout << "<p>The verse number (" << verseNum << ") is too high.</p>" << endl;
+		 exit(2);
 	 }
 	 else if (verseNum <= 0) {
 		 cout << "<p>The verse must be a positive number.</p>" << endl;
 	       	 validInput = false;
+		 exit(2);
 	}
 	 else {
 		 validInput = true;
@@ -103,89 +106,110 @@ int main() {
   // Check the number of verse
   if (nv != cgi.getElements().end()) {
         Numv = nv->getIntegerValue();
-         if (Numv > 176) {
-                 cout << "<p>The number of verse (" << Numv << ") is too high.</p>" << endl;
-         }
-         else if (Numv <= 0) {
-                 cout << "<p>The numer of verse must be a positive number.</p>" << endl;
+         if (Numv <= 0) {
+                 cout << "<p>The numer of verse must be at least.</p>" << endl;
                  validInput = false;
+		 exit(2);
         }
          else {
                  validInput = true;
         }
   }
+  string b;
+  int bibleVersionNum = bibleVersion->getIntegerValue();
+  cout << "bibleVersionNum =" << bibleVersionNum;
+  if (bibleVersionNum == 2) { // Determine version of Bible to use
+	b = "/home/class/csc3004/Bibles/kjv-complete";
+  }
+  else if (bibleVersionNum == 3) {
+	b = "/home/class/csc3004/Bibles/dby-complete";
+  }
+  else if (bibleVersionNum == 4) {
+	b = "/home/class/csc3004/Bibles/ylt-complete";
+  }
+  else if (bibleVersionNum == 5) {
+	b = "/home/class/csc3004/Bibles/webster-complete";
+  }
+  else {
+	b = "/home/class/csc3004/Bibles/web-complete";
+  }
+  Bible webBible(b);
 
-  /* TO DO: PUT CODE HERE TO CALL YOUR BIBLE CLASS FUNCTIONS
-   *        TO LOOK UP THE REQUESTED VERSES
-   */
-  // DAISY
-//  int curV = verseNum;			// current verse
-//  int finalV = verseNum + (Numv-1);	// final or destination verse
-  int count = 0;
+
   // Create a reference from the numbers;
   Ref ref(bookNum, chapterNum, verseNum);
 
   // Create Bible object to process the raw text file
-  Bible webBible("/home/class/csc3004/Bibles/web-complete");
+//  Bible webBible("/home/class/csc3004/Bibles/web-complete");
   Verse verseResult;
   LookupResult result;
+  int count = 0;	// help to keep track with multi-verse
+  int prevV, curV; 	// keep track of pervious and current verse
+  Ref curRef;		// keep track of current ref 
 
   // Look up the first verse base on reference and display the result.
   verseResult = webBible.lookup(ref, result);
   count++;
 
+  // if all of the input are valid
   if (validInput) {
-	cout << "Search Type: <b>" << **st << "</b>" << endl;
-	cout << "<p>Your result: \n" << endl;
+	cout << "Search Type: <b>" << **st << "</b><br>" << endl;
   }
+  // else print out an error
   else {
-	  cout << "<p>Invalid Input: <em>report the more specific problem.</em></p>" << endl;
+	cout << "<p>Invalid Input: <em>report the more specific problem.</em></p>" << endl;
+	exit(2);
   }
 
+  // if the verse doesn't exist print an error
   if (!(verseResult.getRef() == ref)) {
+	cout << "<br><b>" << endl;
 	ref.displayNonExisted();
-	cout << endl;
+	cout << "</b>" << endl;
+
+	if (result != SUCCESS){
+		cout << "<br><b>" << endl;
+		cout << webBible.error(result) << endl;
+		cout << "</b>" << endl;
+	}
 	exit(2);
-  } else {
+  }
+  // else display the result.
+  else {
 	cout << "<br><b>" << endl;
 	ref.displayBookNameCh();
-//	cout << "<br>" << endl;
-//	verseResult.display();
 	cout << "</b><br>" << **verse << " : " << verseResult.getVerse() << endl;
+	// update the current verse number
+	curV = verseResult.getVerseNum();
   }
 
-  // Only apply on multi-verse case, keep looking for the next verse while the curV is less than or equal to the f 
+  // Only apply on multi-verse case, keep looking for the next verse while the count is less than or equal to the verse number. 
   if (Numv > 1){
         do {
+		// look up from ref
 		verseResult = webBible.nextVerse(result);
                 count++;
-  //              verseResult.display();
-		cout << "<br>" << verseResult.getVerseNum() << " : " << verseResult.getVerse(); 
-              	cout << "\n" << endl;
+
+		// update the previous and current verse number
+		prevV = curV;
+		curV = verseResult.getVerseNum();
+
+		// update current ref
+		curRef = verseResult.getRef();
+
+		if (curV < prevV) {
+			cout << "<br><br><b>" << endl;
+			curRef.displayBookNameCh();
+			cout << "</b><br>" << verseResult.getVerseNum() << " : " << verseResult.getVerse();
+			cout << "\n" << endl;
+		}
+		else {
+			cout << "<br>" << verseResult.getVerseNum() << " : " << verseResult.getVerse(); 
+	              	cout << "\n" << endl;
+		}
         } while (count != Numv);
    }
 
 
-
-
-
-  /* SEND BACK THE RESULTS
-   * Finally we send the result back to the client on the standard output stream
-   * in HTML text format.
-   * This string will be inserted as is inside a container on the web page, 
-   * so we must include HTML formatting commands to make things look presentable!
-   */
-/*
-  if (validInput) {
-	cout << "Search Type: <b>" << **st << "</b>" << endl;
-	cout << "<p>Your result: "
-		 << **book << " " << **chapter << ":" << verseResult.getVerse()
-		 << "<em> The " << **nv
-		 << " TEST IF IT UPDATE 1</em></p>" << endl;
-  }
-  else {
-	  cout << "<p>Invalid Input: <em>report the more specific problem.</em></p>" << endl;
-  }
-*/
   return 0;
 }
